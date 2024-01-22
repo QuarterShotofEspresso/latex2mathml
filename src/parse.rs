@@ -32,6 +32,9 @@ impl<'a> Parser<'a> {
             let num = self.l.cur;
             self.l.read_char();
             Token::Number(format!("{}", num))
+        } else if self.cur_token.has_strarg() {
+            let arg = self.l.read_strarg();
+            Token::StringArgument(arg)
         } else {
             self.l.next_token()
         };
@@ -88,6 +91,38 @@ impl<'a> Parser<'a> {
             Token::Operator(op) => Node::Operator(*op),
             Token::Function(fun)  => Node::Function(fun.to_string(), None),
             Token::Space(space) => Node::Space(*space),
+            Token::VSpace => { // VSpace Modeled after Frac
+                // self.next_token();
+
+                // テキストを読み取る
+                // let mut space = String::new();
+                // while let Token::Letter(x, _) = self.cur_token {
+                // // while self.cur_token != Token::RBrace {
+                //     space.push(x);
+                //     self.next_token();
+                //     // if self.peek_token_is(Token::RBrace) {
+                //     //     break;
+                //     // }
+                // }
+
+                // let space = if self.peek_token_is(&Token::LBrace) {
+                //     self.parse_group(&Token::RBrace)
+                // } else {
+                //     "0.5em"
+                // };
+                // self.next_token();
+                let peek_token = self.peek_token.clone();
+                let arg = match peek_token {
+                    // if self.peek_token_is(Token::StringArgument(String)) {
+                        Token::StringArgument(x) => {
+                            self.next_token();
+                            x
+                        },
+                        _ => "1em".to_string()
+                };
+                // let Token::StringArgument(space) = self.parse();
+                Node::VSpace(arg.to_owned())
+            },
             Token::Sqrt => {
                 self.next_token();
                 let degree = if self.cur_token_is(&Token::Paren("[")) {

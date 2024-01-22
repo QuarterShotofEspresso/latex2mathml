@@ -187,6 +187,7 @@ pub fn replace(input: &str) -> Result<String, error::LatexError> {
     //**** Convert inline-math ****//
     
     // `$` に一致するインデックスのリストを生成
+    // NOTE: RBRBRBR Might consider modifying the code here to accept standalone commands e.g. \vskip, ...
     let idx = input.iter().enumerate()
         .filter_map(|(i, byte)| if byte == &b'$' {
             Some(i)
@@ -215,7 +216,7 @@ pub fn replace(input: &str) -> Result<String, error::LatexError> {
 
         input = output;
     }
-
+    
     unsafe {
         Ok(String::from_utf8_unchecked(input))
     }

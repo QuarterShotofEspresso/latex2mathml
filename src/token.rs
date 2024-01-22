@@ -27,6 +27,7 @@ pub enum Token {
     Integral(char),
     Lim(&'static str),
     Space(f32),
+    VSpace, // Token Vspace
     Style(Variant),
     Big(&'static str),
     Over(char, Accent),
@@ -40,12 +41,20 @@ pub enum Token {
     Slashed,
     Text,
     Command(String),
+    StringArgument(String),
 }
 
 impl Token {
     pub(crate) fn acts_on_a_digit(&self) -> bool {
         match self {
             Token::Sqrt | Token::Frac | Token::Binom(_) | Token::Style(_) => true,
+            _ => false,
+        }
+    }
+
+    pub(crate) fn has_strarg(&self) -> bool {
+        match self {
+            Token::VSpace => true,
             _ => false,
         }
     }
@@ -92,6 +101,7 @@ impl Token {
             " "     => Token::Space(1.),
             "quad"  => Token::Space(1.),
             "qquad" => Token::Space(2.),
+            "vskip" => Token::VSpace, // VSpace
             "langle" => Token::Paren("&lang;"),
             "rangle" => Token::Paren("&rang;"),
             "{"      => Token::Paren("{"),

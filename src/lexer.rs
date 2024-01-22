@@ -47,18 +47,27 @@ impl<'a> Lexer<'a> {
 
     /// コマンド一つ分を読み込みトークンに変換する.
     fn read_command(&mut self) -> Token {
-        // `\\` を読み飛ばす
+        // `\\` を読み飛ばす // Skip over
         self.read_char();
         let mut command = String::new();
-        // 1 文字は確実に読む
+        // 1 文字は確実に読む // Read the text reliably
         let first = self.read_char();
         command.push(first);
-        // ASCII アルファベットなら続けて読む
+        // ASCII アルファベットなら続けて読む // continue reading the alphabet
         while first.is_ascii_alphabetic() && self.cur.is_ascii_alphabetic() {
             command.push(self.read_char());
         }
 
         Token::from_command(&command)
+    }
+
+    pub(crate) fn read_strarg(&mut self) -> String {
+        self.skip_whitespace(); // skip white space
+        let mut arg = String::new(); // read in args
+        while self.cur.is_alphanumeric() || self.cur == '.' {
+            arg.push(self.read_char());
+        }
+        arg
     }
     
     /// 数字一つ分を読み込みトークンに変換する.

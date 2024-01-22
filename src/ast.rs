@@ -10,6 +10,7 @@ pub enum Node {
     Operator(char),
     Function(String, Option<Box<Node>>),
     Space(f32),
+    VSpace(String), // Vertical Spacing
     Subscript(Box<Node>, Box<Node>),
     Superscript(Box<Node>, Box<Node>),
     SubSup{ target: Box<Node>, sub: Box<Node>, sup: Box<Node>},
@@ -50,7 +51,8 @@ impl fmt::Display for Node {
                 Some(arg) => write!(f, "<mi>{}</mi><mo>&#x2061;</mo>{}", fun, arg),
                 None      => write!(f, "<mi>{}</mi>", fun),
             },
-            Node::Space(space) => write!(f, r#"<mspace width="{}em"/>"#, space),
+            Node::Space(space) => write!(f, r#"<mspace width={}em></mspace>"#, space),
+            Node::VSpace(space) => write!(f, r#"<mspace height={}></mspace>"#, space), // VSpace conversion
             Node::Subscript(a, b) => write!(f, "<msub>{}{}</msub>", a, b),
             Node::Superscript(a, b) => write!(f, "<msup>{}{}</msup>", a, b),
             Node::SubSup{target, sub, sup} => write!(f, "<msubsup>{}{}{}</msubsup>", target, sub, sup),
