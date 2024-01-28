@@ -33,7 +33,7 @@ impl fmt::Display for LatexError {
             ),
             LatexError::UnwrappedArgSyntaxError => write!(f,
                 "Unwrapped arguments are not enclosed..."
-            )
+            ),
         }
     }
 }

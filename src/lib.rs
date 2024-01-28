@@ -228,12 +228,15 @@ pub fn replace(input: &str) -> Result<String, error::LatexError> {
         return Err(LatexError::UnwrappedArgSyntaxError);
     }
 
+    // println!("{:?}", idx); // Debug
+
     if idx.len() > 1 {
         let mut output = Vec::new();
         output.extend_from_slice(&input[0..idx[0]]);
         for i in (0..idx.len()-1).step_by(2) {
             { // convert LaTeX to MathML
-                let input = &input[idx[i]..idx[i+1]];
+                let input = &input[idx[i]..idx[i+1]+1];
+                // println!("{:?}", input); // Debug
                 let input = unsafe { std::str::from_utf8_unchecked(input) };
                 let mathml = latex_to_mathml(input, DisplayStyle::Inline)?;
                 output.extend_from_slice(mathml.as_bytes());
