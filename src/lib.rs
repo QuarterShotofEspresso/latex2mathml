@@ -153,7 +153,6 @@ pub fn replace(input: &str) -> Result<String, error::LatexError> {
     let mut input: Vec<u8> = input.as_bytes().to_owned();
 
     //**** Convert block-math ****//
-
     // `$$` に一致するインデックスのリストを生成
     let idx = input.windows(2).enumerate()
         .filter_map(|(i, window)| if window == &[b'$', b'$'] {
@@ -184,10 +183,10 @@ pub fn replace(input: &str) -> Result<String, error::LatexError> {
         input = output;
     }
 
+
+
     //**** Convert inline-math ****//
-    
     // `$` に一致するインデックスのリストを生成
-    // NOTE: RBRBRBR Might consider modifying the code here to accept standalone commands e.g. \vskip, ...
     let idx = input.iter().enumerate()
         .filter_map(|(i, byte)| if byte == &b'$' {
             Some(i)
@@ -216,6 +215,40 @@ pub fn replace(input: &str) -> Result<String, error::LatexError> {
 
         input = output;
     }
+
+
+    //**** Convert unwrapped commands ****//
+    // `\command` に一致するインデックスのリストを生成
+    // NOTE: RBRBRBR Might consider modifying the code here to accept standalone commands e.g. \vskip, ...
+    let idx = input.iter().enumerate()
+        .filter_map(|(i, byte)| if byte == &b'\\' || byte == &b'}' {
+            Some(i)
+        } else { None }).collect::<Vec<usize>>();
+    if idx.len()%2 != 0 {
+        return Err(LatexError::UnwrappedArgSyntaxError);
+    }
+
+    if idx.len() > 1 {
+        let mut output = Vec::new();
+        output.extend_from_slice(&input[0..idx[0]]);
+        for i in (0..idx.len()-1).step_by(2) {
+            { // convert LaTeX to MathML
+                let input = &input[idx[i]..idx[i+1]];
+                let input = unsafe { std::str::from_utf8_unchecked(input) };
+                let mathml = latex_to_mathml(input, DisplayStyle::Inline)?;
+                output.extend_from_slice(mathml.as_bytes());
+            }
+
+            if i+2 < idx.len() {
+                output.extend_from_slice(&input[idx[i+1]+1..idx[i+2]]);
+            } else {
+                output.extend_from_slice(&input[idx.last().unwrap()+1..]);
+            }
+        }
+
+        input = output;
+    }
+
     
     unsafe {
         Ok(String::from_utf8_unchecked(input))

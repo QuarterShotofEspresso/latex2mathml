@@ -92,6 +92,7 @@ impl<'a> Parser<'a> {
             Token::Function(fun)  => Node::Function(fun.to_string(), None),
             Token::Space(space) => Node::Space(*space),
             Token::VSpace => { // VSpace Modeled after Frac
+                // if self.peek_token_is('{') {self.next_token()};
                 let peek_token = self.peek_token.clone();
                 let arg = match peek_token {
                         Token::StringArgument(x) => {
@@ -100,6 +101,7 @@ impl<'a> Parser<'a> {
                         },
                         _ => "1em".to_string()
                 };
+                // if self.peek_token_is('}') {self.next_token()};
                 Node::VSpace(arg.to_owned())
             },
             Token::Sqrt => {

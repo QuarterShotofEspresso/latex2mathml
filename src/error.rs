@@ -11,6 +11,7 @@ pub enum LatexError {
     },
     UnknownEnvironment(String),
     InvalidNumberOfDollarSigns,
+    UnwrappedArgSyntaxError,
 }
 
 impl fmt::Display for LatexError {
@@ -30,6 +31,9 @@ impl fmt::Display for LatexError {
             LatexError::InvalidNumberOfDollarSigns => write!(f,
                 "The number of dollar sings found is invalid."
             ),
+            LatexError::UnwrappedArgSyntaxError => write!(f,
+                "Unwrapped arguments are not enclosed..."
+            )
         }
     }
 }

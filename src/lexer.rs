@@ -63,10 +63,12 @@ impl<'a> Lexer<'a> {
 
     pub(crate) fn read_strarg(&mut self) -> String {
         self.skip_whitespace(); // skip white space
+        if self.cur == '{' {self.read_char();} // skip '{'
         let mut arg = String::new(); // read in args
         while self.cur.is_alphanumeric() || self.cur == '.' {
             arg.push(self.read_char());
         }
+        if self.cur == '}' {self.read_char();} // skip '}'
         arg
     }
     
