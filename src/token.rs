@@ -41,7 +41,10 @@ pub enum Token {
     Slashed,
     Text,
     Command(String),
-    StringArgument(String),
+    StringArgument(String), // RB Added String Argument for \vskip command
+    BlockDelimiter,  // RB Added BlockDelimiter
+    InlineDelimiter, // RB added InlineDelimiter
+    PlainText(String),
 }
 
 impl Token {

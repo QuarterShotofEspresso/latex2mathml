@@ -9,9 +9,19 @@ use super::{
     attribute::Variant,
 };
 
+// We use this to keep track of whether we're parsing
+// text inside a $$ or $ env, or if we're parsing
+// text outside of a $$ or $ env (plain text).
+#[derive(Debug, Clone)]
+enum ParseMode {
+    PlainText, // outside $$/$
+    Latex, // Inside $$/$
+}
+
 /// Lexer
 #[derive(Debug, Clone)]
 pub(crate) struct Lexer<'a> {
+    mode: ParseMode,
     input: std::str::Chars<'a>,
     pub(crate) cur: char,
     pub(crate) peek: char,
@@ -21,6 +31,7 @@ impl<'a> Lexer<'a> {
     /// 入力ソースコードを受け取り Lexer インスタンスを生成する.
     pub(crate) fn new(input: &'a str) -> Self {
         let mut lexer = Lexer { 
+            mode: ParseMode::PlainText,
             input: input.chars(),
             cur:  '\u{0}',
             peek: '\u{0}',
@@ -85,8 +96,88 @@ impl<'a> Lexer<'a> {
 
     /// 次のトークンを生成する.
     pub(crate) fn next_token(&mut self) -> Token {
-        self.skip_whitespace();
 
+        // Text Mode
+        // let token = match self.mode {
+        //     ParseMode::PlainText => {
+        //         match self.cur {
+        //             // Check to see if we're in a Block/Inline env
+        //             '$' => if self.peek == '$' {
+        //                 self.read_char();
+        //                 self.mode = ParseMode::Latex;
+        //                 Token::BlockDelimiter
+        //             } else {
+        //                 self.mode = ParseMode::Latex;
+        //                 Token::InlineDelimiter
+        //             },
+        //             // If we're reading a command environment,
+        //             // we'll need to see how to handle this
+        //             // that is, in text mode or in latex mode.
+        //             '\\' => {
+        //                 self.read_command()
+        //             },
+        //             // If it's anything else, we need to just push this onto the stack.
+        //             text => {
+        //                 let mut plain_text = String::new();
+        //                 while self.cur != '\\' && self.cur != '$' {
+        //                     plain_text.push(self.read_char());
+        //                 }
+        //                 Token::Paragraph(&plain_text)
+        //             },
+        //         }
+        //     },
+        //     ParseMode::Latex => {
+        //         self.skip_whitespace();
+        //         match self.cur {
+        //             '=' => Token::Operator('='),
+        //             ';' => Token::Operator(';'),
+        //             ',' => Token::Operator(','),
+        //             '.' => Token::Operator('.'),
+        //             '\'' => Token::Operator('\''),
+        //             '(' => Token::Paren("("),
+        //             ')' => Token::Paren(")"),
+        //             '{' => Token::LBrace,
+        //             '}' => Token::RBrace,
+        //             '[' => Token::Paren("["),
+        //             ']' => Token::Paren("]"),
+        //             '|' => Token::Paren("|"),
+        //             '+' => Token::Operator('+'), 
+        //             '-' => Token::Operator('-'),
+        //             '*' => Token::Operator('*'),
+        //             '/' => Token::Operator('/'),
+        //             '!' => Token::Operator('!'),
+        //             '<' => Token::Operator('<'), 
+        //             '>' => Token::Operator('>'), 
+        //             '_' => Token::Underscore,
+        //             '^' => Token::Circumflex,
+        //             '&' => Token::Ampersand,
+        //             '\u{0}' => Token::EOF,
+        //             ':' => if self.peek == '=' {
+        //                 self.read_char();
+        //                 Token::Paren(":=")
+        //             } else { Token::Operator(':') },
+        //             '$' => if self.peek == '$' {
+        //                 self.read_char();
+        //                 Token::BlockDelimiter
+        //             } else { Token::InlineDelimiter },
+        //             '\\' => { return self.read_command(); },
+        //             c => {
+        //                 if c.is_ascii_digit() {
+        //                     return self.read_number();
+        //                 } else if c.is_ascii_alphabetic() {
+        //                     Token::Letter(c, Variant::Italic)
+        //                 } else {
+        //                     Token::Letter(c, Variant::Normal)
+        //                 }
+        //             },
+        //         }
+        //     }
+        // };
+        // self.read_char();
+        // token
+
+        // Tex Mode
+        self.skip_whitespace();
         let token = match self.cur {
             '=' => Token::Operator('='),
             ';' => Token::Operator(';'),
@@ -115,18 +206,57 @@ impl<'a> Lexer<'a> {
                 self.read_char();
                 Token::Paren(":=")
             } else { Token::Operator(':') },
+            '$' => if self.peek == '$' {
+                // Read the extra '$'
+                self.read_char();
+                println!("DOUBLE");
+                // Toggle the parse mode depending on the existing parse mode
+                self.mode = match self.mode {
+                    ParseMode::Latex => ParseMode::PlainText,
+                    ParseMode::PlainText => ParseMode::Latex,
+                };
+                Token::BlockDelimiter
+            } else {
+                // Toggle the parse mode depending on the existing parse mode
+                println!("SINGLE");
+                self.mode = match self.mode {
+                    ParseMode::Latex => ParseMode::PlainText,
+                    ParseMode::PlainText => ParseMode::Latex,
+                };
+                Token::InlineDelimiter
+            },
             '\\' => { return self.read_command(); },
             c => {
-                if c.is_ascii_digit() {
-                    return self.read_number();
-                } else if c.is_ascii_alphabetic() {
-                    Token::Letter(c, Variant::Italic)
-                } else {
-                    Token::Letter(c, Variant::Normal)
+                match self.mode {
+                    ParseMode::PlainText => {
+                        let mut plain_text = String::new();
+                        while self.peek != '\\' && self.peek != '$' {
+                            plain_text.push(self.read_char());
+                        }
+                        plain_text.push(self.cur); // Get the last character
+                        Token::PlainText(plain_text) // Return as PlainText
+                    },
+                    ParseMode::Latex => {
+                        if c.is_ascii_digit() {
+                            return self.read_number();
+                        } else if c.is_ascii_alphabetic() {
+                            Token::Letter(c, Variant::Italic)
+                        } else {
+                            Token::Letter(c, Variant::Normal)
+                        }
+                    }
                 }
+                // if c.is_ascii_digit() {
+                //     return self.read_number();
+                // } else if c.is_ascii_alphabetic() {
+                //     Token::Letter(c, Variant::Italic)
+                // } else {
+                //     Token::Letter(c, Variant::Normal)
+                // }
             },
         };
         self.read_char();
+        // println!("{:?}", token);
         token
     }
 }

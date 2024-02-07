@@ -34,11 +34,17 @@ pub enum Node {
     Slashed(Box<Node>),
     Style(Option<DisplayStyle>, Box<Node>),
     Undefined(String),
+    BlockDelimiter(Box<Node>),
+    InlineDelimiter(Box<Node>),
+    PlainText(String),
 }
 
 impl fmt::Display for Node {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Node::BlockDelimiter(content) => write!(f, r#"<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">{}</math>"#, content),
+            Node::InlineDelimiter(content) => write!(f, r#"<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline">{}</math>"#, content),
+            Node::PlainText(content) => write!(f, r#"{}"#, content),
             Node::Number(number)  => write!(f, "<mn>{}</mn>", number),
             Node::Letter(letter, var) => match var {
                 Variant::Italic => write!(f, "<mi>{}</mi>", letter),

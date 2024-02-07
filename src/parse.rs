@@ -82,26 +82,57 @@ impl<'a> Parser<'a> {
     }
 
     // 中置演算子 `_`, `^`, '\'' が続くかどうかを気にせずに, 直後のノードを読む
+    // Read the next node without worrying whether it is followed by the infix operators `_`, `^`, '\''
     // 
     // 注) 中置演算子を考慮して正しくノードを読む場合は `parse_node()` を使う.
+    // Note: Use `parse_node()` if you want to read the node correctly considering infix operators.
     fn parse_single_node(&mut self) -> Result<Node, LatexError> {
         let node = match &self.cur_token {
+            Token::PlainText(content) => {
+                Node::PlainText(content.to_owned())
+            },
+            Token::BlockDelimiter => {
+                let block = self.parse_group(&Token::BlockDelimiter)?;
+                Node::BlockDelimiter(Box::new(block))
+            },
+            Token::InlineDelimiter => {
+                let inline = self.parse_group(&Token::InlineDelimiter)?;
+                Node::InlineDelimiter(Box::new(inline))
+            }
             Token::Number(number) => Node::Number(number.clone()),
             Token::Letter(x, v)   => Node::Letter(*x, *v),
             Token::Operator(op) => Node::Operator(*op),
             Token::Function(fun)  => Node::Function(fun.to_string(), None),
             Token::Space(space) => Node::Space(*space),
-            Token::VSpace => { // VSpace Modeled after Frac
-                // if self.peek_token_is('{') {self.next_token()};
-                let peek_token = self.peek_token.clone();
-                let arg = match peek_token {
+            Token::VSpace => { // VSpace syntax: \vskip{<space>}
+                // println!("NFIAESUBFEI");
+                self.next_token(); // Skip '{'
+                // match &self.cur_token {
+                //     Token::LBrace => self.next_token(),
+                //     token => {return Err(LatexError::UnexpectedToken{
+                //                 expected: Token::LBrace, got: token.clone()
+                //             })}
+                // };
+                // let peek_token = self.peek_token.clone();
+                // print!("What the fuck is going on");
+                let arg = match &self.cur_token {
                         Token::StringArgument(x) => {
+                            let str_arg = x.clone();
                             self.next_token();
-                            x
+                            str_arg
                         },
-                        _ => "1em".to_string()
+                        _ => {
+                            "1em".to_string()
+                        }
                 };
-                // if self.peek_token_is('}') {self.next_token()};
+                // if self.peek_token_is(Token::RBrace) {self.next_token()};
+                // self.next_token(); // Skip '}'
+                // match &self.cur_token {
+                //     Token::RBrace => self.next_token(),
+                //     token => {return Err(LatexError::UnexpectedToken{
+                //                 expected: Token::RBrace, got: token.clone()
+                //             })}
+                // };
                 Node::VSpace(arg.to_owned())
             },
             Token::Sqrt => {
@@ -381,14 +412,16 @@ impl<'a> Parser<'a> {
         let mut nodes = Vec::new();
 
         while {
-            if self.cur_token_is(&Token::EOF) { // 閉じ括弧がないまま入力が終了した場合
+            if self.cur_token_is(&Token::EOF) { 
+                // 閉じ括弧がないまま入力が終了した場合
+                // If input ends without a closing parenthesis
                 return Err(LatexError::UnexpectedToken{
                     expected: end_token.clone(),
                     got: self.cur_token.clone()
                 });
             }
 
-            !self.cur_token_is(end_token) 
+            !self.cur_token_is(end_token)
         } {
             nodes.push(
                 self.parse_node()?
@@ -415,6 +448,7 @@ impl<'a> Parser<'a> {
             self.next_token();
         }
         // 終わったら最後の `}` を cur が指した状態で抜ける
+        // When finished, exit with cur pointing to the last `}`
 
         text
     }

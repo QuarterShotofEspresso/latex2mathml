@@ -7,6 +7,7 @@ This crate is implemented in pure Rust, so it works in any environments if Rust 
 
 - [WebAssembly example](https://osanshouo.github.io/latex2mathml-web/index.html)
 
+- Helpful website: https://htmledit.squarefree.com
 
 ## Supported LaTeX commands
 

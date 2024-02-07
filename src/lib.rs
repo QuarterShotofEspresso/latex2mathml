@@ -100,7 +100,6 @@ fn convert_content(latex: &str) -> Result<String, error::LatexError> {
     let mathml = nodes.iter()
         .map(|node| format!("{}", node))
         .collect::<String>();
-    
     Ok(mathml)
 }
 
@@ -129,6 +128,14 @@ pub fn latex_to_mathml(latex: &str, display: DisplayStyle) -> Result<String, err
     ))
 }
 
+pub fn transpile(latex: &str) -> Result<String, error::LatexError> {
+    let mathml = convert_content(latex)?;
+
+    Ok(format!(
+        r#"{}"#,mathml
+    ))
+}
+
 /// Find LaTeX equations and replace them to MathML.
 /// 
 /// - inline-math: `$..$`
@@ -152,6 +159,7 @@ pub fn latex_to_mathml(latex: &str, display: DisplayStyle) -> Result<String, err
 pub fn replace(input: &str) -> Result<String, error::LatexError> {
     let mut input: Vec<u8> = input.as_bytes().to_owned();
 
+    println!("HELLO BTICH");
     //**** Convert block-math ****//
     // `$$` に一致するインデックスのリストを生成
     let idx = input.windows(2).enumerate()
@@ -184,6 +192,7 @@ pub fn replace(input: &str) -> Result<String, error::LatexError> {
     }
 
 
+    println!("HELLO BTICH");
 
     //**** Convert inline-math ****//
     // `$` に一致するインデックスのリストを生成
@@ -220,43 +229,80 @@ pub fn replace(input: &str) -> Result<String, error::LatexError> {
     //**** Convert unwrapped commands ****//
     // `\command` に一致するインデックスのリストを生成
     // NOTE: RBRBRBR Might consider modifying the code here to accept standalone commands e.g. \vskip, ...
-    let idx = input.iter().enumerate()
-        .filter_map(|(i, byte)| if byte == &b'\\' || byte == &b'}' {
-            Some(i)
-        } else { None }).collect::<Vec<usize>>();
-    if idx.len()%2 != 0 {
-        return Err(LatexError::UnwrappedArgSyntaxError);
-    }
+    // let idx = input.iter().enumerate()
+    //     .filter_map(|(i, byte)| if byte == &b'\\' || byte == &b'}' {
+    //         Some(i)
+    //     } else { None }).collect::<Vec<usize>>();
+    // if idx.len()%2 != 0 {
+    //     println!("{:?}", idx); // Debug
+    //     println!("{:?}", &input[idx[0]..idx[0]+10]);
+    //     return Err(LatexError::UnwrappedArgSyntaxError);
+    // }
 
     // println!("{:?}", idx); // Debug
 
-    if idx.len() > 1 {
-        let mut output = Vec::new();
-        output.extend_from_slice(&input[0..idx[0]]);
-        for i in (0..idx.len()-1).step_by(2) {
-            { // convert LaTeX to MathML
-                let input = &input[idx[i]..idx[i+1]+1];
-                // println!("{:?}", input); // Debug
-                let input = unsafe { std::str::from_utf8_unchecked(input) };
-                let mathml = latex_to_mathml(input, DisplayStyle::Inline)?;
-                output.extend_from_slice(mathml.as_bytes());
-            }
+    // if idx.len() > 1 {
+    //     let mut output = Vec::new();
+    //     output.extend_from_slice(&input[0..idx[0]]);
+    //     for i in (0..idx.len()-1).step_by(2) {
+    //         { // convert LaTeX to MathML
+    //             let input = &input[idx[i]..idx[i+1]+1];
+    //             // println!("{:?}", input); // Debug
+    //             let input = unsafe { std::str::from_utf8_unchecked(input) };
+    //             let mathml = latex_to_mathml(input, DisplayStyle::Inline)?;
+    //             output.extend_from_slice(mathml.as_bytes());
+    //         }
 
-            if i+2 < idx.len() {
-                output.extend_from_slice(&input[idx[i+1]+1..idx[i+2]]);
-            } else {
-                output.extend_from_slice(&input[idx.last().unwrap()+1..]);
-            }
-        }
+    //         if i+2 < idx.len() {
+    //             output.extend_from_slice(&input[idx[i+1]+1..idx[i+2]]);
+    //         } else {
+    //             output.extend_from_slice(&input[idx.last().unwrap()+1..]);
+    //         }
+    //     }
 
-        input = output;
-    }
+    //     input = output;
+    // }
 
     
     unsafe {
         Ok(String::from_utf8_unchecked(input))
     }
 }
+
+
+
+// RBRBRBRBRB
+// Update the replace function to parse the entire file char by char
+// instead of extracting specific commands
+// pub fn transpile(path: &str) -> Result<String, error::LatexError> {
+
+//     // let output = String::new();
+
+//     // while not EOF is found,
+//     // push each character until one of the following tokens are found:
+//     //    $$
+//         // read tokens till the first non-whitespace char is found.
+//             // begin translating to mathml (parse group)?
+//             // Otherwise read till a corresponding $$ if found.
+//     //    $
+//         // read tokens till the first non-whitespace char is found...
+//             // begin translating to mathml (parse group)?
+//             // Otherwise read till a corresponding $$ if found.
+//     //    \
+//         // parse the command.
+//             // I really hope I can use parse group
+    
+    
+
+//     // let original = fs::read_to_string(&path)?;
+//     // let converted = replace(&original)?;
+
+//     converted = 
+
+
+//     Ok(format!("{}", converted))
+
+// }
 
 
 /// Convert all LaTeX expressions for all HTMLs in a given directory.
