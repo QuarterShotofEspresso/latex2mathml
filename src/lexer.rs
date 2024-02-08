@@ -73,13 +73,15 @@ impl<'a> Lexer<'a> {
     }
 
     pub(crate) fn read_strarg(&mut self) -> String {
-        self.skip_whitespace(); // skip white space
+        // self.skip_whitespace(); // skip white space
         if self.cur == '{' {self.read_char();} // skip '{'
+        // else {panic!("where's the {?")};
         let mut arg = String::new(); // read in args
         while self.cur.is_alphanumeric() || self.cur == '.' {
             arg.push(self.read_char());
         }
         if self.cur == '}' {self.read_char();} // skip '}'
+        // else {panic!("where's the {?")};
         arg
     }
     
@@ -209,7 +211,7 @@ impl<'a> Lexer<'a> {
             '$' => if self.peek == '$' {
                 // Read the extra '$'
                 self.read_char();
-                println!("DOUBLE");
+                // println!("DOUBLE");
                 // Toggle the parse mode depending on the existing parse mode
                 self.mode = match self.mode {
                     ParseMode::Latex => ParseMode::PlainText,
@@ -218,7 +220,7 @@ impl<'a> Lexer<'a> {
                 Token::BlockDelimiter
             } else {
                 // Toggle the parse mode depending on the existing parse mode
-                println!("SINGLE");
+                // println!("SINGLE");
                 self.mode = match self.mode {
                     ParseMode::Latex => ParseMode::PlainText,
                     ParseMode::PlainText => ParseMode::Latex,
@@ -246,13 +248,6 @@ impl<'a> Lexer<'a> {
                         }
                     }
                 }
-                // if c.is_ascii_digit() {
-                //     return self.read_number();
-                // } else if c.is_ascii_alphabetic() {
-                //     Token::Letter(c, Variant::Italic)
-                // } else {
-                //     Token::Letter(c, Variant::Normal)
-                // }
             },
         };
         self.read_char();

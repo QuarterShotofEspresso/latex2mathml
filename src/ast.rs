@@ -58,7 +58,7 @@ impl fmt::Display for Node {
                 None      => write!(f, "<mi>{}</mi>", fun),
             },
             Node::Space(space) => write!(f, r#"<mspace width={}em></mspace>"#, space),
-            Node::VSpace(space) => write!(f, r#"<mspace height={}></mspace>"#, space), // VSpace conversion
+            Node::VSpace(space) => write!(f, r#"<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mspace height={}></mspace></math>"#, space), // VSpace conversion
             Node::Subscript(a, b) => write!(f, "<msub>{}{}</msub>", a, b),
             Node::Superscript(a, b) => write!(f, "<msup>{}{}</msup>", a, b),
             Node::SubSup{target, sub, sup} => write!(f, "<msubsup>{}{}{}</msubsup>", target, sub, sup),

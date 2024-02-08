@@ -105,17 +105,10 @@ impl<'a> Parser<'a> {
             Token::Function(fun)  => Node::Function(fun.to_string(), None),
             Token::Space(space) => Node::Space(*space),
             Token::VSpace => { // VSpace syntax: \vskip{<space>}
-                // println!("NFIAESUBFEI");
-                self.next_token(); // Skip '{'
-                // match &self.cur_token {
-                //     Token::LBrace => self.next_token(),
-                //     token => {return Err(LatexError::UnexpectedToken{
-                //                 expected: Token::LBrace, got: token.clone()
-                //             })}
-                // };
-                // let peek_token = self.peek_token.clone();
-                // print!("What the fuck is going on");
-                let arg = match &self.cur_token {
+                // NOTE: THE PARENS ARE MANAGED BY THE LEXER FUNC HAS_STRARG
+                let peek_token = self.peek_token.clone(); // should be string arg
+                let arg = match peek_token {
+                        // Note TO SELF String Arg token handles parenthesis!!!
                         Token::StringArgument(x) => {
                             let str_arg = x.clone();
                             self.next_token();
@@ -125,14 +118,6 @@ impl<'a> Parser<'a> {
                             "1em".to_string()
                         }
                 };
-                // if self.peek_token_is(Token::RBrace) {self.next_token()};
-                // self.next_token(); // Skip '}'
-                // match &self.cur_token {
-                //     Token::RBrace => self.next_token(),
-                //     token => {return Err(LatexError::UnexpectedToken{
-                //                 expected: Token::RBrace, got: token.clone()
-                //             })}
-                // };
                 Node::VSpace(arg.to_owned())
             },
             Token::Sqrt => {
